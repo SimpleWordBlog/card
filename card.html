@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码名片生成器</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Consolas&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: default !important;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .lang-btn,
+        .theme-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f3);
+            color: #333;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-btn.active,
+        .theme-btn.active {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .card {
+            width: 620px;
+            height: 370px;
+            border-radius: 12px;
+            overflow: auto;
+            position: relative;
+            margin-bottom: 25px;
+            transition: all 0.4s ease;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            background: white;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Keil µVision5 主题 */
+        .keil {
+            background: #ffffff;
+            border: 1px solid #c0c0c0;
+        }
+
+        .keil .title-bar {
+            background: linear-gradient(to bottom, #4a90e2 0%, #357abd 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 32px;
+        }
+
+        .keil .menu-bar {
+            background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+            color: #333;
+            padding: 4px 16px;
+            font-size: 11px;
+            height: 24px;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .keil .toolbar {
+            background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+            border-bottom: 1px solid #c0c0c0;
+            padding: 6px 16px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .keil .file-tabs {
+            background: #e8e8e8;
+            border-bottom: 1px solid #c0c0c0;
+            height: 24px;
+            display: flex;
+            align-items: flex-end;
+            padding-left: 16px;
+        }
+
+        .keil .file-tab {
+            background: white;
+            border: 1px solid #c0c0c0;
+            border-bottom: none;
+            padding: 2px 12px;
+            font-size: 11px;
+            border-radius: 4px 4px 0 0;
+            color: #333;
+        }
+
+        .keil .editor {
+            background: #ffffff;
+            color: #000;
+            padding: 16px 20px;
+            height: calc(100% - 112px);
+            overflow: auto;
+        }
+
+        /* VS Code 主题 */
+        .vscode {
+            background: #ffffff;
+            border: 1px solid #e1e4e8;
+        }
+
+        .vscode .title-bar {
+            background: #f6f8fa;
+            color: #24292e;
+            padding: 8px 16px;
+            font-size: 13px;
+            height: 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .vscode .activity-bar {
+            background: #f3f3f3;
+            width: 40px;
+            position: absolute;
+            left: 0;
+            top: 35px;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 0;
+            gap: 6px;
+            border-right: 1px solid #e1e4e8;
+        }
+
+        .vscode .activity-icon {
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #424242;
+            transition: all 0.2s ease;
+        }
+
+        .vscode .activity-icon:hover {
+            background: #e8e8e8;
+        }
+
+        .vscode .activity-icon.active {
+            background: #e8e8e8;
+            border-left: 2px solid #007acc;
+        }
+
+        .vscode .sidebar {
+            background: #f8f8f8;
+            width: 160px;
+            position: absolute;
+            left: 40px;
+            top: 35px;
+            bottom: 0;
+            border-right: 1px solid #e1e4e8;
+            font-size: 11px;
+        }
+
+        .vscode .sidebar-header {
+            padding: 6px 12px;
+            font-weight: 600;
+            color: #383838;
+            border-bottom: 1px solid #e1e4e8;
+            background: #f8f8f8;
+            font-size: 10px;
+        }
+
+        .vscode .folder-tree {
+            color: #383838;
+            line-height: 1.3;
+            padding: 6px 12px;
+        }
+
+        .vscode .folder-item {
+            padding: 1px 0;
+            font-size: 11px;
+        }
+
+        .vscode .editor-area {
+            position: absolute;
+            left: 200px;
+            top: 35px;
+            right: 0;
+            bottom: 0;
+        }
+
+        .vscode .tabs {
+            background: #f8f8f8;
+            height: 35px;
+            display: flex;
+            align-items: flex-end;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .vscode .tab {
+            background: white;
+            color: #383838;
+            padding: 8px 16px;
+            border-right: 1px solid #e1e4e8;
+            font-size: 13px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-top: 2px solid #007acc;
+            min-width: 120px;
+        }
+
+        .vscode .tab-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            font-size: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .vscode .tab-icon.c-icon {
+            background: #007acc;
+        }
+
+        .vscode .tab-icon.cpp-icon {
+            background: #00599c;
+        }
+
+        .vscode .tab-icon.java-icon {
+            background: #ed8b00;
+        }
+
+        .vscode .tab-icon.linux-icon {
+            background: #fcc624;
+        }
+
+        .vscode .editor {
+            background: #ffffff;
+            color: #383838;
+            padding: 12px 16px;
+            height: calc(100% - 35px);
+            overflow: auto;
+            font-size: 13px;
+        }
+
+        /* IntelliJ IDEA 主题 */
+        .idea {
+            background: #ffffff;
+            border: 1px solid #c0c0c0;
+        }
+
+        .idea .title-bar {
+            background: linear-gradient(to bottom, #f5f5f5, #e0e0e0);
+            color: #333;
+            padding: 8px 16px;
+            font-size: 13px;
+            height: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #c0c0c0;
+        }
+
+        .idea .menu-bar {
+            background: #f8f8f8;
+            color: #333;
+            padding: 6px 16px;
+            font-size: 12px;
+            height: 28px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .idea .toolbar {
+            background: linear-gradient(to bottom, #f0f0f0, #e8e8e8);
+            padding: 6px 16px;
+            height: 32px;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .idea .run-button {
+            background: linear-gradient(145deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .idea .editor {
+            background: #ffffff;
+            color: #333;
+            padding: 16px 20px;
+            height: calc(100% - 92px);
+            overflow: auto;
+        }
+
+        /* MobaXterm 主题 */
+        .mobaxterm {
+            background: #1e1e1e;
+            border: 1px solid #404040;
+        }
+
+        .mobaxterm .title-bar {
+            background: linear-gradient(to bottom, #404040, #2a2a2a);
+            color: #ffffff;
+            padding: 6px 16px;
+            font-size: 12px;
+            height: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #555;
+        }
+
+        .mobaxterm .session-info {
+            background: #2d5016;
+            color: #00ff00;
+            padding: 6px 16px;
+            font-size: 11px;
+            border-bottom: 1px solid #3a6b1a;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .mobaxterm .terminal {
+            background: #000000;
+            color: #00ff00;
+            padding: 16px 20px;
+            font-size: 13px;
+            line-height: 1.4;
+            height: calc(100% - 58px);
+            overflow: auto;
+        }
+
+        .mobaxterm .prompt {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .mobaxterm .command {
+            color: #ffffff;
+        }
+
+        .mobaxterm .output {
+            color: #87ceeb;
+        }
+
+        .mobaxterm .ip-address {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        /* 代码编辑器样式 */
+        .code-editor {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .line-numbers {
+            color: #999;
+            font-size: 12px;
+            user-select: none;
+            margin-right: 12px;
+            text-align: right;
+            min-width: 20px;
+            flex-shrink: 0;
+        }
+
+        .code-content {
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .code-line {
+            min-height: 19px;
+            display: block;
+            white-space: pre;
+        }
+
+        /* 基础语法高亮 - Keil风格 */
+        .keil .keyword {
+            color: #0000FF;
+            font-weight: bold;
+        }
+
+        .keil .string {
+            color: #A31515;
+        }
+
+        .keil .comment {
+            color: #008000;
+            font-style: italic;
+        }
+
+        .keil .number {
+            color: #098658;
+        }
+
+        .keil .function {
+            color: #795E26;
+            font-weight: 600;
+        }
+
+        .keil .type {
+            color: #267F99;
+            font-weight: 600;
+        }
+
+        .keil .preprocessor {
+            color: #AF00DB;
+            font-weight: bold;
+        }
+
+        .keil .operator {
+            color: #D73A49;
+        }
+
+        .keil .namespace {
+            color: #267F99;
+            font-weight: 600;
+        }
+
+        .keil .stl {
+            color: #795E26;
+        }
+
+        /* VS Code风格语法高亮 */
+        .vscode .keyword {
+            color: #0000FF;
+            font-weight: bold;
+        }
+
+        .vscode .string {
+            color: #A31515;
+        }
+
+        .vscode .comment {
+            color: #6A9955;
+            font-style: italic;
+        }
+
+        .vscode .number {
+            color: #098658;
+        }
+
+        .vscode .function {
+            color: #795E26;
+            font-weight: 600;
+        }
+
+        .vscode .type {
+            color: #267F99;
+            font-weight: 600;
+        }
+
+        .vscode .preprocessor {
+            color: #C586C0;
+            font-weight: bold;
+        }
+
+        .vscode .operator {
+            color: #D73A49;
+        }
+
+        .vscode .namespace {
+            color: #4EC9B0;
+            font-weight: 600;
+        }
+
+        .vscode .stl {
+            color: #4FC1FF;
+        }
+
+        /* IntelliJ IDEA风格语法高亮 */
+        .idea .keyword {
+            color: #000080;
+            font-weight: bold;
+        }
+
+        .idea .string {
+            color: #067D17;
+        }
+
+        .idea .comment {
+            color: #8C8C8C;
+            font-style: italic;
+        }
+
+        .idea .number {
+            color: #1750EB;
+        }
+
+        .idea .function {
+            color: #795E26;
+            font-weight: 600;
+        }
+
+        .idea .type {
+            color: #000080;
+            font-weight: 600;
+        }
+
+        .idea .preprocessor {
+            color: #9876AA;
+            font-weight: bold;
+        }
+
+        .idea .operator {
+            color: #000000;
+        }
+
+        .idea .namespace {
+            color: #000080;
+            font-weight: 600;
+        }
+
+        .idea .stl {
+            color: #871094;
+        }
+
+        /* 控制按钮 */
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 110px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-outline:hover {
+            background: #f8f9fa;
+            border-color: #007bff;
+            transform: translateY(-2px);
+        }
+
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            min-height: 200px;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .edit-mode-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            border-color: #007bff;
+            background: #007bff;
+            color: white;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .control {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .close {
+            background: #ff5f57;
+        }
+
+        .minimize {
+            background: #ffbd2e;
+        }
+
+        .maximize {
+            background: #28ca42;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .card {
+                width: 100%;
+                max-width: 500px;
+                height: 320px;
+            }
+
+            .vscode .activity-bar {
+                width: 32px;
+            }
+
+            .vscode .sidebar {
+                width: 120px;
+                left: 32px;
+            }
+
+            .vscode .editor-area {
+                left: 152px;
+            }
+
+            .vscode .tab {
+                min-width: 80px;
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .vscode .activity-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+
+            .vscode .sidebar-header {
+                padding: 4px 8px;
+                font-size: 9px;
+            }
+
+            .vscode .folder-tree {
+                padding: 4px 8px;
+            }
+
+            .vscode .folder-item {
+                font-size: 10px;
+            }
+        }
+
+        /* 打印样式 */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+
+            .controls,
+            .buttons {
+                display: none !important;
+            }
+
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                margin: 0 !important;
+                transform: none !important;
+                page-break-inside: avoid !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="https://github.com/你的用户名/你的仓库名" class="github-corner" target="_blank" aria-label="View source on GitHub">
+        <svg width="80" height="80" viewBox="0 0 250 250"
+            style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true">
+            <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+            <path
+                d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+                fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+            <path
+                d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+                fill="currentColor" class="octo-body"></path>
+        </svg>
+    </a>
+
+    <h1 style="text-align: center; margin-bottom: 20px; color: #333; font-size: 2.2rem; font-weight: 600;">
+        👨‍💻 程序员名片生成器
+    </h1>
+
+    <div class="controls">
+        <button class="lang-btn active" onclick="changeLang('c')">🔵 C Language</button>
+        <button class="lang-btn" onclick="changeLang('cpp')">⚡ C++</button>
+        <button class="lang-btn" onclick="changeLang('java')">☕ Java</button>
+        <button class="lang-btn" onclick="changeLang('linux')">🐧 Linux</button>
+    </div>
+
+    <div class="controls">
+        <button class="theme-btn active" onclick="changeTheme('keil')">Keil µVision5</button>
+        <button class="theme-btn" onclick="changeTheme('vscode')">VS Code</button>
+        <button class="theme-btn" onclick="changeTheme('idea')">IntelliJ IDEA</button>
+        <button class="theme-btn" onclick="changeTheme('mobaxterm')">MobaXterm</button>
+    </div>
+
+    <div class="card keil" id="businessCard">
+        <!-- 内容将由JavaScript生成 -->
+    </div>
+
+    <div class="buttons">
+        <button class="btn btn-outline" onclick="showEditModal()">
+            ✏️ 编辑内容
+        </button>
+        <button class="btn btn-primary" onclick="exportImage()">
+            📥 导出图片
+        </button>
+        <button class="btn btn-secondary" onclick="printCard()">
+            🖨️ 打印名片
+        </button>
+    </div>
+
+    <!-- 编辑模态框 -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑名片内容</h3>
+                <button class="close-btn" onclick="hideEditModal()">×</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">编辑方式</label>
+                <div class="edit-mode-tabs">
+                    <button class="tab-btn active" onclick="setEditMode('info')">📝 个人信息</button>
+                    <button class="tab-btn" onclick="setEditMode('code')">💻 自定义代码</button>
+                </div>
+            </div>
+
+            <!-- 个人信息编辑 -->
+            <div id="infoForm">
+                <div class="form-group">
+                    <label class="form-label">姓名</label>
+                    <input id="userName" class="form-input" placeholder="请输入姓名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">职位</label>
+                    <input id="userTitle" class="form-input" placeholder="请输入职位">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">邮箱</label>
+                    <input id="userEmail" class="form-input" placeholder="请输入邮箱">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">电话</label>
+                    <input id="userPhone" class="form-input" placeholder="请输入电话">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">技能</label>
+                    <input id="userSkills" class="form-input" placeholder="请输入技能">
+                </div>
+            </div>
+
+            <!-- 自定义代码编辑 -->
+            <div id="codeForm" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label" id="codeLabel">C 代码</label>
+                    <textarea id="customCodeInput" class="form-textarea" placeholder="请输入您的代码..."></textarea>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 8px;">
+                    💡 直接粘贴您的代码，程序会自动添加语法高亮和行号
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="hideEditModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveChanges()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // 全局变量
+        let currentLang = 'c';
+        let currentTheme = 'keil';
+        let editMode = 'info';
+
+        const userInfo = {
+            name: '张小明',
+            title: '嵌入式工程师',
+            email: 'zhang@example.com',
+            phone: '138-xxxx-xxxx',
+            skills: 'C/C++, Java, Linux'
+        };
+
+        const customCode = {};
+
+        const languages = {
+            c: { name: 'C Language', ext: 'c', icon: '🔵' },
+            cpp: { name: 'C++', ext: 'cpp', icon: '⚡' },
+            java: { name: 'Java', ext: 'java', icon: '☕' },
+            linux: { name: 'Linux', ext: 'sh', icon: '🐧' }
+        };
+
+        // 生成默认代码
+        function generateDefaultCode(lang) {
+            const templates = {
+                c: `#include <stdio.h>
+
+int main(void) {
+    printf("姓名: %s\\n", "${userInfo.name}");
+    printf("职位: %s\\n", "${userInfo.title}");
+    printf("邮箱: %s\\n", "${userInfo.email}");
+    printf("电话: %s\\n", "${userInfo.phone}");
+    printf("技能: %s\\n", "${userInfo.skills}");
+    return 0;
+}`,
+                cpp: `#include<iostream>
+using namespace std;
+
+int main(){
+    cout << "姓名: " << "${userInfo.name}"<< endl;
+    cout << "职位: " << "${userInfo.title}"<< endl;
+    cout << "邮箱: " << "${userInfo.email}"<< endl;
+    cout << "电话: " << "${userInfo.phone}"<< endl;
+    cout << "技能: " << "${userInfo.skills}"<< endl;
+    return 0;
+}`,
+                java: `public class BusinessCardPrinter {
+    public static void main(String[] args) {
+        System.out.println("姓名:${userInfo.name}");
+        System.out.println("职位:${userInfo.title}");
+        System.out.println("邮箱:${userInfo.email}");
+        System.out.println("电话:${userInfo.phone}");
+        System.out.println("技能:${userInfo.skills}");
+    }
+}
+`,
+                linux: `#!/bin/bash
+
+# 个人信息
+NAME="${userInfo.name}"
+TITLE="${userInfo.title}"
+EMAIL="${userInfo.email}"
+PHONE="${userInfo.phone}"
+SKILLS="${userInfo.skills}"
+
+# 显示名片信息
+echo "=============================="
+echo "       个人名片信息"
+echo "=============================="
+echo "姓名: \$NAME"
+echo "职位: \$TITLE"
+echo "邮箱: \$EMAIL"
+echo "电话: \$PHONE"
+echo "技能: \$SKILLS"
+echo "=============================="`
+            };
+            return templates[lang] || '';
+        }
+
+        // 获取当前代码
+        function getCurrentCode() {
+            if (customCode[currentLang]) {
+                return customCode[currentLang];
+            }
+            return generateDefaultCode(currentLang);
+        }
+
+        // 修复并增强的语法高亮函数
+        function highlightCode(code, lang) {
+            // HTML转义函数
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // 定义C++专用的增强语法规则
+            const syntaxRules = {
+                c: [
+                    { name: 'comment', pattern: /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm },
+                    { name: 'preprocessor', pattern: /^(\s*#\w+.*$)/gm },
+                    { name: 'string', pattern: /(["'])(?:(?=(\\?))\2[\s\S])*?\1/g },
+                    { name: 'keyword', pattern: /\b(int|char|float|double|void|return|if|else|for|while|do|switch|case|break|continue|struct|typedef|const|static|extern|sizeof|auto|register|signed|unsigned|long|short|volatile|enum|union|goto|default)\b/g },
+                    { name: 'function', pattern: /\b(printf|scanf|malloc|free|strlen|strcpy|strcat|strcmp|memcpy|memset|fopen|fclose|fread|fwrite|fprintf|fscanf|getchar|putchar)\b/g },
+                    { name: 'type', pattern: /\b(size_t|FILE|NULL|true|false)\b/g },
+                    { name: 'number', pattern: /\b(\d+\.?\d*f?|\d+[ul]*|0x[0-9a-fA-F]+)\b/g },
+                    { name: 'operator', pattern: /[+\-*/%=<>!&|^~?:;,(){}[\]]/g }
+                ],
+                cpp: [
+                    { name: 'comment', pattern: /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm },
+                    { name: 'preprocessor', pattern: /^(\s*#\w+.*$)/gm },
+                    { name: 'string', pattern: /(["'])(?:(?=(\\?))\2[\s\S])*?\1/g },
+                    // C++关键字 - 增强版
+                    { name: 'keyword', pattern: /\b(alignas|alignof|and|and_eq|asm|atomic_cancel|atomic_commit|atomic_noexcept|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|consteval|constexpr|constinit|const_cast|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq)\b/g },
+                    // namespace关键字单独处理
+                    { name: 'namespace', pattern: /\b(std|using\s+namespace)\b/g },
+                    // STL和标准库
+                    { name: 'stl', pattern: /\b(vector|string|map|set|list|queue|stack|pair|make_pair|array|deque|unordered_map|unordered_set|shared_ptr|unique_ptr|weak_ptr|iterator|const_iterator|begin|end|size|empty|push_back|pop_back|insert|erase|find|sort|algorithm|iostream|fstream|sstream|stringstream|ostringstream|istringstream|ostream|istream|ifstream|ofstream)\b/g },
+                    // 函数和方法
+                    { name: 'function', pattern: /\b(cout|cin|endl|printf|scanf|getline|swap|move|forward|max|min|abs|sqrt|pow|log|exp|sin|cos|tan|floor|ceil|round)\b/g },
+                    // 类型
+                    { name: 'type', pattern: /\b(size_t|ptrdiff_t|nullptr_t|int8_t|int16_t|int32_t|int64_t|uint8_t|uint16_t|uint32_t|uint64_t|wstring|u16string|u32string)\b/g },
+                    { name: 'number', pattern: /\b(\d+\.?\d*f?|\d+[ulUL]*|0x[0-9a-fA-F]+|0b[01]+)\b/g },
+                    { name: 'operator', pattern: /[+\-*/%=<>!&|^~?:;,(){}[\]\.]/g }
+                ],
+                java: [
+                    { name: 'comment', pattern: /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm },
+                    { name: 'string', pattern: /(["'])(?:(?=(\\?))\2[\s\S])*?\1/g },
+                    { name: 'keyword', pattern: /\b(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while|true|false|null)\b/g },
+                    { name: 'function', pattern: /\b(System|out|println|print|String|main|length|equals|charAt|substring|indexOf|toLowerCase|toUpperCase|trim|split|valueOf|parseInt|parseDouble|ArrayList|HashMap|HashSet|StringBuilder|StringBuffer|Scanner|BufferedReader|FileReader|PrintWriter|Math|abs|max|min|sqrt|pow|random)\b/g },
+                    { name: 'type', pattern: /\b(String|Integer|Double|Float|Boolean|Character|Byte|Short|Long|Object|Class|Thread|Runnable|Exception|RuntimeException|List|Map|Set|Collection|Iterator|Comparator)\b/g },
+                    { name: 'number', pattern: /\b(\d+\.?\d*[fFdD]?|\d+[lL]?|0x[0-9a-fA-F]+)\b/g },
+                    { name: 'operator', pattern: /[+\-*/%=<>!&|^~?:;,(){}[\]\.]/g }
+                ],
+                linux: [
+                    { name: 'comment', pattern: /(#.*$)/gm },
+                    { name: 'string', pattern: /(["'])(?:(?=(\\?))\2[\s\S])*?\1/g },
+                    { name: 'keyword', pattern: /\b(echo|cat|ls|cd|pwd|sudo|chmod|chown|chgrp|grep|find|awk|sed|sort|uniq|head|tail|wc|cut|tr|which|whereis|locate|ps|top|htop|kill|killall|jobs|nohup|screen|tmux|tar|zip|unzip|gzip|gunzip|bzip2|bunzip2|wget|curl|ssh|scp|rsync|mount|umount|df|du|free|uname|whoami|id|su|passwd|ln|cp|mv|rm|mkdir|rmdir|touch|file|stat|history|alias|export|source|bash|sh|zsh|fish|csh|tcsh|if|then|else|elif|fi|for|while|until|do|done|case|esac|function|return|exit|break|continue|test|eval|exec|wait|sleep|date|uptime|hostname|ping|netstat|ss|lsof|iptables|systemctl|service|crontab|at|watch|xargs|parallel)\b/g },
+                    { name: 'function', pattern: /\b(\$\([^)]+\)|`[^`]+`|\$\{[^}]+\})\b/g },
+                    { name: 'type', pattern: /\b(\$\w+|\$[0-9*@#?$!-]|\$\{[^}]+\})\b/g },
+                    { name: 'number', pattern: /\b(\d+)\b/g },
+                    { name: 'operator', pattern: /[|&;<>(){}[\]$=]/g }
+                ]
+            };
+
+            const rules = syntaxRules[lang] || syntaxRules.c;
+
+            // 首先转义HTML
+            let result = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            result = result.replace(/&lt;&lt;/g, '<<').replace(/&gt;&gt;/g, '>>');
+
+            // 创建一个用于跟踪已高亮区域的数组
+            const highlightedRanges = [];
+
+            // 按优先级应用语法高亮（注释和字符串优先级最高）
+            rules.forEach((rule, ruleIndex) => {
+                const matches = [];
+                let match;
+
+                // 重置正则表达式
+                rule.pattern.lastIndex = 0;
+
+                while ((match = rule.pattern.exec(result)) !== null) {
+                    const start = match.index;
+                    const end = start + match[0].length;
+
+                    // 检查是否与已高亮的区域重叠（注释和字符串有最高优先级）
+                    const overlaps = highlightedRanges.some(range =>
+                        (start >= range.start && start < range.end) ||
+                        (end > range.start && end <= range.end) ||
+                        (start <= range.start && end >= range.end)
+                    );
+
+                    if (!overlaps) {
+                        matches.push({
+                            start: start,
+                            end: end,
+                            text: match[0],
+                            className: rule.name,
+                            priority: ruleIndex // 添加优先级
+                        });
+                    }
+
+                    // 防止无限循环
+                    if (rule.pattern.global && rule.pattern.lastIndex === match.index) {
+                        rule.pattern.lastIndex++;
+                    }
+                }
+
+                // 按位置排序并应用高亮（从后往前处理，避免索引变化）
+                matches.sort((a, b) => b.start - a.start);
+
+                matches.forEach(matchInfo => {
+                    const before = result.substring(0, matchInfo.start);
+                    const highlighted = `<span class="${matchInfo.className}">${matchInfo.text}</span>`;
+                    const after = result.substring(matchInfo.end);
+                    result = before + highlighted + after;
+
+                    // 更新已高亮区域
+                    const offset = highlighted.length - matchInfo.text.length;
+                    highlightedRanges.forEach(range => {
+                        if (range.start >= matchInfo.start) {
+                            range.start += offset;
+                            range.end += offset;
+                        }
+                    });
+                    highlightedRanges.push({
+                        start: matchInfo.start,
+                        end: matchInfo.start + highlighted.length
+                    });
+                });
+            });
+
+            return result;
+        }
+
+        // 生成代码HTML
+        function generateCodeHTML() {
+            const code = getCurrentCode();
+            const lines = code.split('\n');
+
+            let lineNumbersHTML = '';
+            let codeContentHTML = '';
+
+            lines.forEach((line, index) => {
+                lineNumbersHTML += `<div>${index + 1}</div>`;
+                const highlightedLine = highlightCode(line, currentLang);
+                codeContentHTML += `<div class="code-line">${highlightedLine}</div>`;
+            });
+
+            return `
+                <div class="code-editor">
+                    <div class="line-numbers">${lineNumbersHTML}</div>
+                    <div class="code-content">${codeContentHTML}</div>
+                </div>
+            `;
+        }
+
+        // 更新名片内容
+        function updateCard() {
+            const card = document.getElementById('businessCard');
+            const lang = languages[currentLang];
+
+            if (currentTheme === 'keil') {
+                card.innerHTML = `
+                    <div class="title-bar">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span>📁</span>
+                            <span>µVision5 - BusinessCard.${lang.ext}</span>
+                        </div>
+                        <div class="window-controls">
+                            <div class="control minimize"></div>
+                            <div class="control maximize"></div>
+                            <div class="control close"></div>
+                        </div>
+                    </div>
+                    <div class="menu-bar">
+                        <span>文件</span><span>编辑</span><span>视图</span><span>项目</span><span>Flash</span><span>调试</span><span>工具</span><span>帮助</span>
+                    </div>
+                    <div class="toolbar">
+                        <span>📋 📁 💾 ✂️ 📄 ▶️ ⏸️ ⏹️</span>
+                    </div>
+                    <div class="file-tabs">
+                        <div class="file-tab">BusinessCard.${lang.ext}</div>
+                    </div>
+                    <div class="editor">
+                        ${generateCodeHTML()}
+                    </div>
+                `;
+            } else if (currentTheme === 'vscode') {
+                const tabIconConfig = {
+                    c: { text: 'C', class: 'c-icon' },
+                    cpp: { text: 'C++', class: 'cpp-icon' },
+                    java: { text: '☕', class: 'java-icon' },
+                    linux: { text: '🐧', class: 'linux-icon' }
+                };
+                const iconConfig = tabIconConfig[currentLang] || tabIconConfig.c;
+
+                card.innerHTML = `
+                    <div class="title-bar">
+                        <span>BusinessCard.${lang.ext} - Visual Studio Code</span>
+                        <div class="window-controls">
+                            <div class="control minimize"></div>
+                            <div class="control maximize"></div>
+                            <div class="control close"></div>
+                        </div>
+                    </div>
+                    <div class="activity-bar">
+                        <div class="activity-icon active" title="Explorer">📁</div>
+                        <div class="activity-icon" title="Search">🔍</div>
+                        <div class="activity-icon" title="Source Control">🌿</div>
+                        <div class="activity-icon" title="Run and Debug">🐛</div>
+                    </div>
+                    <div class="sidebar">
+                        <div class="sidebar-header">EXPLORER</div>
+                        <div class="folder-tree">
+                            <div class="folder-item">📁 WORKSPACE</div>
+                            <div class="folder-item">&nbsp;&nbsp;📄 BusinessCard.${lang.ext}</div>
+                            <div class="folder-item">&nbsp;&nbsp;📄 README.md</div>
+                            <div class="folder-item">&nbsp;&nbsp;📄 .gitignore</div>
+                        </div>
+                    </div>
+                    <div class="editor-area">
+                        <div class="tabs">
+                            <div class="tab">
+                                <div class="tab-icon ${iconConfig.class}">${iconConfig.text}</div>
+                                BusinessCard.${lang.ext}
+                            </div>
+                        </div>
+                        <div class="editor">
+                            ${generateCodeHTML()}
+                        </div>
+                    </div>
+                `;
+            } else if (currentTheme === 'idea') {
+                card.innerHTML = `
+                    <div class="title-bar">
+                        <span>IntelliJ IDEA 2024.1 - BusinessCard.${lang.ext}</span>
+                        <div class="window-controls">
+                            <div class="control minimize"></div>
+                            <div class="control maximize"></div>
+                            <div class="control close"></div>
+                        </div>
+                    </div>
+                    <div class="menu-bar">
+                        <span>File</span><span>Edit</span><span>View</span><span>Navigate</span><span>Code</span><span>Analyze</span><span>Refactor</span><span>Build</span><span>Run</span><span>Tools</span>
+                    </div>
+                    <div class="toolbar">
+                        <button class="run-button">▶ Run</button>
+                        <button class="run-button" style="background: linear-gradient(145deg, #ff9800, #f57c00);">🐛 Debug</button>
+                    </div>
+                    <div class="editor">
+                        ${generateCodeHTML()}
+                    </div>
+                `;
+            } else if (currentTheme === 'mobaxterm') {
+                card.innerHTML = `
+                    <div class="title-bar">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span>🖥️</span>
+                            <span>192.168.2.20 (${userInfo.name.toLowerCase()})</span>
+                        </div>
+                        <div class="window-controls">
+                            <div class="control minimize"></div>
+                            <div class="control maximize"></div>
+                            <div class="control close"></div>
+                        </div>
+                    </div>
+                    <div class="session-info">
+                        ● MobaXterm Personal Edition v22.1 ●<br>
+                        (SSH client, X server and network tools)
+                    </div>
+                    <div class="terminal">
+                        <div class="output">► SSH session to <span class="ip-address">${userInfo.name.toLowerCase()}@192.168.2.20</span></div>
+                        <div class="output">● Direct SSH: ✓ | SSH compression: ✓ | X11-forwarding: ✓</div>
+                        <div class="output"></div>
+                        <div class="output">Welcome to Orange Pi 1.0.2 Jammy with Linux 6.1.31</div>
+                        <div class="output">Last login: Mon Jun  9 14:08:50 2025 from <span class="ip-address">192.168.2.2</span></div>
+                        <div class="output"></div>
+                        <div><span class="prompt">${userInfo.name.toLowerCase()}@orangepi:~$ </span><span class="command">cat profile.txt</span></div>
+                        <div class="output">姓名: ${userInfo.name}</div>
+                        <div class="output">职位: ${userInfo.title}</div>
+                        <div class="output">邮箱: ${userInfo.email}</div>
+                        <div class="output">电话: ${userInfo.phone}</div>
+                        <div class="output">技能: ${userInfo.skills}</div>
+                        <div><span class="prompt">${userInfo.name.toLowerCase()}@orangepi:~$ </span><span style="animation: blink 1s infinite;">_</span></div>
+                    </div>
+                `;
+            }
+        }
+
+        // 切换语言
+        function changeLang(lang) {
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            currentLang = lang;
+            updateCard();
+        }
+
+        // 切换主题
+        function changeTheme(theme) {
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            currentTheme = theme;
+            document.getElementById('businessCard').className = `card ${theme}`;
+            updateCard();
+        }
+
+        // 显示编辑模态框
+        function showEditModal() {
+            document.getElementById('editModal').classList.add('show');
+            // 填充当前信息
+            document.getElementById('userName').value = userInfo.name;
+            document.getElementById('userTitle').value = userInfo.title;
+            document.getElementById('userEmail').value = userInfo.email;
+            document.getElementById('userPhone').value = userInfo.phone;
+            document.getElementById('userSkills').value = userInfo.skills;
+            document.getElementById('customCodeInput').value = customCode[currentLang] || '';
+            document.getElementById('codeLabel').textContent = `${languages[currentLang].name} 代码`;
+        }
+
+        // 隐藏编辑模态框
+        function hideEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        // 设置编辑模式
+        function setEditMode(mode) {
+            editMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (mode === 'info') {
+                document.getElementById('infoForm').style.display = 'block';
+                document.getElementById('codeForm').style.display = 'none';
+            } else {
+                document.getElementById('infoForm').style.display = 'none';
+                document.getElementById('codeForm').style.display = 'block';
+            }
+        }
+
+        // 保存更改
+        function saveChanges() {
+            if (editMode === 'info') {
+                userInfo.name = document.getElementById('userName').value;
+                userInfo.title = document.getElementById('userTitle').value;
+                userInfo.email = document.getElementById('userEmail').value;
+                userInfo.phone = document.getElementById('userPhone').value;
+                userInfo.skills = document.getElementById('userSkills').value;
+            } else {
+                const code = document.getElementById('customCodeInput').value.trim();
+                if (code) {
+                    customCode[currentLang] = code;
+                } else {
+                    delete customCode[currentLang];
+                }
+            }
+            updateCard();
+            hideEditModal();
+        }
+
+        // 导出图片
+        async function exportImage() {
+            try {
+                const card = document.getElementById('businessCard');
+                const canvas = await html2canvas(card, {
+                    scale: 4,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    allowTaint: true,
+                    imageTimeout: 0,
+                    logging: false
+                });
+
+                const link = document.createElement('a');
+                link.download = `${userInfo.name}_${currentLang}_${currentTheme}_名片.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+            } catch (error) {
+                console.error('导出失败:', error);
+                alert('图片导出失败，请重试');
+            }
+        }
+
+        // 打印名片
+        function printCard() {
+            window.print();
+        }
+
+        // 添加键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideEditModal();
+            }
+        });
+
+        // 初始化
+        updateCard();
+
+        // 添加眨眼动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes blink {
+                0%, 50% { opacity: 1; }
+                51%, 100% { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>
